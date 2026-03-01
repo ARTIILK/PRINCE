@@ -8,6 +8,7 @@ import {
   Music, CircleDot, ChevronRight, Terminal, Globe, Bot, Layout
 } from 'lucide-react';
 import * as THREE from 'three';
+import kraftLogo from './logo/kraft.png';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -16,7 +17,10 @@ function cn(...inputs: ClassValue[]) {
 }
 
 // --- Lanyard API Hook ---
-const LANYARD_USER_ID = '1459859699624186053';
+const LANYARD_USER_ID = import.meta.env.VITE_LANYARD_USER_ID || '1459859699624186053';
+const DISCORD_PROFILE_URL = import.meta.env.VITE_DISCORD_PROFILE_URL || 'https://discord.com/users/1459859699624186053';
+const GITHUB_PROFILE_URL = import.meta.env.VITE_GITHUB_PROFILE_URL || 'https://github.com/ARTIILK';
+const DEV_COMMUNITY_URL = import.meta.env.VITE_DEV_COMMUNITY_URL || 'https://discord.gg/z69mSaVSVb';
 
 interface LanyardData {
   discord_status: 'online' | 'idle' | 'dnd' | 'offline';
@@ -38,7 +42,7 @@ function useLanyard(userId: string) {
 
   useEffect(() => {
     let ws: WebSocket;
-    let heartbeatInterval: NodeJS.Timeout;
+    let heartbeatInterval: ReturnType<typeof setInterval>;
 
     const connect = () => {
       ws = new WebSocket('wss://api.lanyard.rest/socket');
@@ -171,7 +175,7 @@ function CyberScene() {
       </Float>
       
       {Array.from({ length: 40 }).map((_, i) => (
-        <OrbitingNode key={i} index={i} />
+        <OrbitingNode key={`node-${i}`} index={i} />
       ))}
 
       <Stars radius={100} depth={50} count={2500} factor={4} saturation={0} fade speed={1} />
@@ -277,6 +281,32 @@ export default function App() {
   };
 
   const playingGame = lanyard?.activities.find(a => a.type === 0);
+
+  const communities = useMemo(() => [
+    {
+      id: 'discord_profile',
+      kind: 'discord_user',
+      title: 'Discord',
+      url: DISCORD_PROFILE_URL,
+      displayName: 'AURTX'
+    },
+    {
+      id: 'github',
+      kind: 'link',
+      title: 'GitHub',
+      url: GITHUB_PROFILE_URL,
+      icon: <Github className="w-5 h-5" />,
+      username: 'ARTIILK'
+    },
+    {
+      id: 'dev_community',
+      kind: 'community',
+      title: 'Kraftwork Collective Hub',
+      url: DEV_COMMUNITY_URL,
+      logo: kraftLogo,
+      description: 'Join the Kraftwork Collective Hub to discuss dev projects & collabs'
+    }
+  ], []);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-gray-100 font-sans selection:bg-emerald-500/30 overflow-x-hidden">
@@ -473,38 +503,110 @@ export default function App() {
           </motion.section>
         </div>
 
-        {/* Social Links */}
-        <motion.footer 
+        {/* Dynamic Social / Community Cards */}
+        <motion.footer
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="flex flex-wrap justify-center gap-4 pb-12"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-12"
         >
-          <a href="#" className="group relative flex items-center gap-3 px-6 py-4 rounded-xl bg-white/5 border border-white/10 hover:bg-[#5865F2]/10 hover:border-[#5865F2]/50 transition-all overflow-hidden hover-trigger">
-            <MessageSquare className="w-5 h-5 group-hover:text-[#5865F2] transition-colors" />
-            <span className="font-medium">Discord</span>
-            <div className="absolute inset-0 bg-black/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <span className="text-xs font-bold text-[#5865F2]">Let's connect!</span>
-            </div>
-          </a>
-          
-          <a href="#" className="group relative flex items-center gap-3 px-6 py-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/50 transition-all overflow-hidden hover-trigger">
-            <Github className="w-5 h-5 group-hover:text-white transition-colors" />
-            <span className="font-medium">GitHub</span>
-            <div className="absolute inset-0 bg-black/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <span className="text-xs font-bold text-white">Check my code</span>
-            </div>
-          </a>
+          {communities.map((c) => {
+            if (c.kind === 'discord_user') {
+              const avatarUrl = lanyard?.discord_user?.avatar && lanyard.discord_user.id
+                ? `https://cdn.discordapp.com/avatars/${lanyard.discord_user.id}/${lanyard.discord_user.avatar}.png?size=256`
+                : undefined;
+              const username = lanyard?.discord_user?.username ?? 'Unknown';
+              const status = lanyard?.discord_status ?? 'offline';
+              const spotify = lanyard?.listening_to_spotify && lanyard?.spotify
+                ? `${lanyard.spotify.song} — ${lanyard.spotify.artist}`
+                : null;
+              const activities = (lanyard?.activities ?? []).map((a: any) => a.name).filter(Boolean).join(', ') || null;
 
-          <a href="#" className="group relative flex items-center gap-3 px-6 py-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/50 transition-all overflow-hidden hover-trigger">
-            <Code className="w-5 h-5 group-hover:text-white transition-colors" />
-            <span className="font-medium">DEV</span>
-            <div className="absolute inset-0 bg-black/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <span className="text-xs font-bold text-white">Read my articles</span>
-            </div>
-          </a>
+              return (
+                <a key={c.id} href={c.url} target="_blank" rel="noopener noreferrer"
+                  className="relative group flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover-trigger hover:bg-white/8 transition-all overflow-hidden"
+                >
+                  <div className="flex-shrink-0">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="avatar" className="w-14 h-14 rounded-full border border-white/10 object-cover" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-sm">N/A</div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="truncate">
+                        <div className="font-medium">AURTX</div>
+                        <div className="text-xs text-gray-400 truncate opacity-0 group-hover:opacity-100 transition-opacity">{username}</div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <div className={cn("h-3 w-3 rounded-full", {
+                          'bg-green-500': status === 'online',
+                          'bg-yellow-500': status === 'idle',
+                          'bg-red-500': status === 'dnd',
+                          'bg-gray-500': status === 'offline'
+                        } as any)} />
+                      </div>
+                    </div>
+
+                    {spotify && <div className="mt-2 text-xs text-emerald-300 font-mono truncate">{spotify}</div>}
+                    {(!spotify && status !== 'offline') && <div className="mt-2 text-xs text-gray-400 truncate">Status: {status}</div>}
+                  </div>
+
+                  <div className="absolute inset-0 bg-black/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-xs font-bold text-emerald-400">Open Discord Profile</span>
+                  </div>
+                </a>
+              );
+            }
+
+            if (c.kind === 'community') {
+              return (
+                <a key={c.id} href={c.url} target="_blank" rel="noopener noreferrer"
+                  className="group relative flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover-trigger hover:bg-purple-500/6 transition-all overflow-hidden"
+                >
+                  <div className="flex-shrink-0">
+                    {c.logo ? (
+                      <img src={c.logo} alt={c.title} className="w-14 h-14 rounded-lg object-cover border border-white/8" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-lg bg-white/6 flex items-center justify-center text-sm">{c.title[0]}</div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium">{c.title}</div>
+                    <div className="text-xs text-gray-400 truncate">{c.description}</div>
+                  </div>
+
+                  <div className="absolute inset-0 bg-black/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-xs font-bold text-purple-300">Join Community</span>
+                  </div>
+                </a>
+              );
+            }
+
+            return (
+              <a key={c.id} href={c.url} target="_blank" rel="noopener noreferrer"
+                className="group relative flex items-center gap-3 px-6 py-4 rounded-xl bg-white/5 border border-white/10 hover-trigger hover:bg-white/10 transition-all overflow-hidden"
+              >
+                {c.icon ?? <MessageSquare className="w-5 h-5 group-hover:text-white transition-colors" />}
+                <div className="flex flex-col">
+                  <span className="font-medium">{c.title}</span>
+                  {(c.username || c.displayName) && (
+                    <span className="text-xs text-gray-400">@{c.username || c.displayName}</span>
+                  )}
+                </div>
+                <div className="absolute inset-0 bg-black/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-xs font-bold text-white">Open</span>
+                </div>
+              </a>
+            );
+          })}
         </motion.footer>
 
+        {/* end of dynamic social/community cards */}
       </div>
     </div>
   );
