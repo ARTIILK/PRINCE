@@ -1,0 +1,5 @@
+{
+  "name": "3D Interactive Portfolio",
+  "description": "A highly interactive, fully responsive single-page portfolio with a Three.js 3D background, glassmorphism UI, and social profile links with hover effects.",
+  "requestFramePermissions": []
+}
