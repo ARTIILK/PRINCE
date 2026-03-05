@@ -197,7 +197,7 @@ const ROLES = [
 ];
 
 const SERVERS = [
-  "Golden MC", "Universal MC", "Apple MC", "Zyper MC", "Cursed MC", 
+  "SkyPix MC", "Astro MC", "Nature MC", "Wood MC", "Cursed MC", 
   "Choco MC", "VIPMC", "BlueMC", "SoulMC", "Mango MC", "Flame MC"
 ];
 
